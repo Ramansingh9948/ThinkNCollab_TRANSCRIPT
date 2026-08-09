@@ -22,7 +22,7 @@ Run the server on ANY host machine or cloud server (AWS, GCP, DigitalOcean, Mac)
 
 ```bash
 # Clone Repository & Install Dependencies
-git clone https://github.com/ThinkNCollab/ThinkNCollab_TRANSCRIPT.git
+git clone https://github.com/Ramansingh9948/ThinkNCollab_TRANSCRIPT.git
 cd ThinkNCollab_TRANSCRIPT
 
 pip install -r requirements.txt

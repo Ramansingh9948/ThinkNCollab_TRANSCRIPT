@@ -5,7 +5,7 @@ setup(
     version="1.0.0",
     description="Official ThinkNCollab Hinglish (Hindi + Indian English) Speech-to-Text ASR Script & Package",
     author="ThinkNCollab AI Team",
-    url="https://github.com/ThinkNCollab/ThinkNCollab_TRANSCRIPT",
+    url="https://github.com/Ramansingh9948/ThinkNCollab_TRANSCRIPT",
     py_modules=["thinkncollab_whisper"],
     packages=find_packages(),
     install_requires=[
@@ -23,7 +23,7 @@ setup(
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
-        "Operating System :: OS Independent",
+        "Operating System :: OSI Approved :: MIT License",
         "Topic :: Scientific/Engineering :: Artificial Intelligence",
     ],
     python_requires=">=3.8",
