@@ -1,0 +1,11 @@
+# Core ML & Audio Processing Dependencies
+numpy>=1.22.0
+scipy>=1.8.0
+tqdm>=4.64.0
+sentencepiece>=0.1.97
+
+# Optional PyTorch & HuggingFace Dependencies for Training & Quantization
+# torch>=2.0.0
+# torchaudio>=2.0.0
+# transformers>=4.30.0
+# ctranslate2>=3.17.0
