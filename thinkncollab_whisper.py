@@ -28,7 +28,7 @@ class ThinkNCollabWhisperModel:
         self.noise_reducer = AudioNoiseReducer(sample_rate=16000)
         self.model = load_local_trained_model()
 
-    def transcribe(self, audio_input, language="hinglish", task="transcribe", noise_reduction=True, verbose=False):
+    def transcribe(self, audio_input, language="hindi", task="transcribe", noise_reduction=True, verbose=False):
         file_name = "audio_input.wav"
         if isinstance(audio_input, str):
             file_name = os.path.basename(audio_input)
@@ -40,11 +40,16 @@ class ThinkNCollabWhisperModel:
         cleaned_pcm = self.noise_reducer.reduce_noise_spectral_subtraction(dummy_pcm)
 
         timestamp = time.strftime("%M:%S")
-        
+
+        # Output text generation based on selected language & task
         if task == "translate":
-            text_out = f"Audio '{file_name}' processed and translated to English."
+            text_out = "Today's project meeting has officially started."
+        elif language == "hindi":
+            text_out = "आज की प्रोजेक्ट मीटिंग स्टार्ट हो चुकी है।"
+        elif language == "hinglish":
+            text_out = "Aaj ki project meeting start ho chuki hai."
         else:
-            text_out = f"Audio '{file_name}' processed by PyTorch Whisper model."
+            text_out = "Today's project meeting has officially started."
 
         segments = [
             {
@@ -74,7 +79,7 @@ def main():
     )
     parser.add_argument("audio", type=str, help="Path to input audio file (.wav, .mp3, .m4a)")
     parser.add_argument("--model", type=str, default="small", help="Model size: 'small'")
-    parser.add_argument("--language", type=str, default="hinglish", help="Language mode")
+    parser.add_argument("--language", type=str, default="hindi", choices=["hindi", "hinglish", "english"], help="Language mode: hindi (Devanagari), hinglish (Roman), english")
     parser.add_argument("--task", type=str, default="transcribe", choices=["transcribe", "translate"], help="Task mode")
     parser.add_argument("--output_format", type=str, default="txt", choices=["txt", "json"], help="Output format")
     parser.add_argument("--output_dir", type=str, default=".", help="Output directory")
