@@ -1,10 +1,4 @@
 #!/usr/bin/env python3
-"""
-ThinkNCollab ASR Backend Python REST API Server
-Provides 100% OpenAI Whisper API Specification Compatibility (/v1/audio/transcriptions & /v1/audio/translations).
-Direct integration with thinkncollab_whisper module.
-"""
-
 import os
 import sys
 import json
@@ -13,7 +7,6 @@ import socket
 import argparse
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
-# macOS OpenMP duplicate library conflict fix
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
 try:
@@ -173,8 +166,8 @@ def run_server(port=None):
     print(f"  ThinkNCollab ASR API Server Active on Host: {host}")
     print("==========================================================================")
     print(f"  - Server IP / Host   : http://{server_ip}:{port}")
-    print(f"  - OpenAI API Endpoint: http://{server_ip}:{port}/v1/audio/transcriptions")
-    print(f"  - Network Binding    : 0.0.0.0 (Accessible across server network/internet)")
+    print(f"  - Endpoint           : http://{server_ip}:{port}/v1/audio/transcriptions")
+    print(f"  - Network Binding    : 0.0.0.0")
     print("==========================================================================")
     try:
         httpd.serve_forever()

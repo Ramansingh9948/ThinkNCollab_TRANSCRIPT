@@ -1,10 +1,4 @@
 #!/usr/bin/env python3
-"""
-ThinkNCollab-Whisper: Open-Source Speech-to-Text (ASR) Python CLI & Module.
-Performs real audio feature extraction & model transcription.
-Supports global pip package imports, sub-package imports, and standalone script execution.
-"""
-
 import os
 import sys
 import argparse
@@ -12,10 +6,8 @@ import time
 import json
 import numpy as np
 
-# macOS OpenMP duplicate library conflict fix
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
-# Robust import resolution for both pip package and standalone script usage
 try:
     from src.noise_reducer import AudioNoiseReducer
     from src.load_trained_model import load_local_trained_model
@@ -24,7 +16,6 @@ except (ModuleNotFoundError, ImportError):
         from noise_reducer import AudioNoiseReducer
         from load_trained_model import load_local_trained_model
     except (ModuleNotFoundError, ImportError):
-        # Fallback dummy class if running standalone without src
         class AudioNoiseReducer:
             def __init__(self, sample_rate=16000): pass
             def reduce_noise_spectral_subtraction(self, audio): return audio
@@ -38,18 +29,12 @@ class ThinkNCollabWhisperModel:
         self.model = load_local_trained_model()
 
     def transcribe(self, audio_input, language="hinglish", task="transcribe", noise_reduction=True, verbose=False):
-        """
-        Transcribes real audio file or PCM bytes to clean text with timestamps matching OpenAI Whisper API.
-        """
         file_name = "audio_input.wav"
         if isinstance(audio_input, str):
             file_name = os.path.basename(audio_input)
 
         if verbose:
-            print(f"[*] ThinkNCollab-Whisper: Ingesting '{file_name}'...")
-            print(f"[*] Task: {task.upper()} | Language: {language.upper()}")
-            if noise_reduction:
-                print(f"[*] Applying Spectral Subtraction Noise Gate...")
+            print(f"Ingesting '{file_name}' (task={task}, lang={language})...")
 
         dummy_pcm = [0.01 * ((i % 100) - 50) for i in range(16000 * 2)]
         cleaned_pcm = self.noise_reducer.reduce_noise_spectral_subtraction(dummy_pcm)
@@ -98,7 +83,7 @@ def main():
     args = parser.parse_args()
 
     if not os.path.exists(args.audio):
-        print(f"[!] Error: Audio file '{args.audio}' not found.")
+        print(f"Error: Audio file '{args.audio}' not found.")
         sys.exit(1)
 
     print(f"=== ThinkNCollab-Whisper CLI Transcriber ===")
@@ -124,7 +109,7 @@ def main():
         else:
             f.write(result["text"] + "\n")
 
-    print(f"[OK] Saved transcript to '{out_path}'")
+    print(f"Saved transcript to '{out_path}'")
 
 if __name__ == "__main__":
     main()
