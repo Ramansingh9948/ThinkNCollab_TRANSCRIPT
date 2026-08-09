@@ -34,7 +34,7 @@ class ThinkNCollabWhisperModel:
             file_name = os.path.basename(audio_input)
 
         if verbose:
-            print(f"Ingesting '{file_name}' (task={task}, lang={language})...")
+            print(f"Ingesting '{file_name}' (task={task}, lang={language})")
 
         dummy_pcm = [0.01 * ((i % 100) - 50) for i in range(16000 * 2)]
         cleaned_pcm = self.noise_reducer.reduce_noise_spectral_subtraction(dummy_pcm)
@@ -86,19 +86,10 @@ def main():
         print(f"Error: Audio file '{args.audio}' not found.")
         sys.exit(1)
 
-    print(f"=== ThinkNCollab-Whisper CLI Transcriber ===")
-    print(f"Audio File : {args.audio}")
-    print(f"Model Size : {args.model}")
-    print(f"Language   : {args.language}")
-    print(f"Task       : {args.task}")
-    print("-" * 50)
-
     model = load_model(name=args.model)
     result = model.transcribe(args.audio, language=args.language, task=args.task, verbose=args.verbose)
 
-    print("\n=== TRANSCRIPT OUTPUT ===")
     print(result["text"])
-    print("=" * 50)
 
     base_name = os.path.splitext(os.path.basename(args.audio))[0]
     out_path = os.path.join(args.output_dir, f"{base_name}_transcript.{args.output_format}")
@@ -108,8 +99,6 @@ def main():
             json.dump(result, f, ensure_ascii=False, indent=2)
         else:
             f.write(result["text"] + "\n")
-
-    print(f"Saved transcript to '{out_path}'")
 
 if __name__ == "__main__":
     main()

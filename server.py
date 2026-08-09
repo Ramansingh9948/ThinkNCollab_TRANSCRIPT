@@ -114,7 +114,7 @@ class ThinkNCollabAPIHandler(BaseHTTPRequestHandler):
                 filename = "recorded_mic_audio.wav"
 
             if model_instance:
-                res_dict = model_instance.transcribe(filename, task=task, verbose=True)
+                res_dict = model_instance.transcribe(filename, task=task, verbose=False)
                 full_text = res_dict["text"]
                 segments = res_dict["segments"]
             else:
@@ -162,17 +162,10 @@ def run_server(port=None):
     server_address = (host, port)
     httpd = HTTPServer(server_address, ThinkNCollabAPIHandler)
 
-    print("==========================================================================")
-    print(f"  ThinkNCollab ASR API Server Active on Host: {host}")
-    print("==========================================================================")
-    print(f"  - Server IP / Host   : http://{server_ip}:{port}")
-    print(f"  - Endpoint           : http://{server_ip}:{port}/v1/audio/transcriptions")
-    print(f"  - Network Binding    : 0.0.0.0")
-    print("==========================================================================")
+    print(f"Serving ThinkNCollab ASR API at http://{server_ip}:{port}")
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:
-        print("\nStopping server...")
         httpd.server_close()
 
 if __name__ == "__main__":
