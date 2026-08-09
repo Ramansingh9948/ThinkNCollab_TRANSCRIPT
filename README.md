@@ -1,7 +1,12 @@
 # ThinkNCollab-Whisper: Open-Source Hinglish Speech-to-Text (ASR)
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![Model Size](https://img.shields.io/badge/model--size-%3C1GB-green.svg)]()
+[![Languages](https://img.shields.io/badge/languages-Hindi%20%7C%20Indian--English%20%7C%20Hinglish-orange.svg)]()
+
 > **Scratch-Trained Small (<1 GB) ASR Model for Hindi + Indian-English (Hinglish) Code-Switching.**  
-> Built for ThinkNCollab and open-sourced for the community. Auto-binds to any server IP on any available port, providing a 100% OpenAI Whisper API specification drop-in replacement.
+> Built for ThinkNCollab and open-sourced for the global community. Auto-binds to any server IP on any available port, providing a 100% OpenAI Whisper API specification drop-in replacement.
 
 ---
 
@@ -37,9 +42,9 @@ python3 server.py
 ==========================================================================
   ThinkNCollab ASR Server Active on Server Host: 0.0.0.0
 ==========================================================================
-  • Server IP / Host   : http://192.168.1.15:8000
-  • OpenAI API Endpoint: http://192.168.1.15:8000/v1/audio/transcriptions
-  • Network Binding    : 0.0.0.0 (Accessible across server network/internet)
+  - Server IP / Host   : http://192.168.1.15:8000
+  - OpenAI API Endpoint: http://192.168.1.15:8000/v1/audio/transcriptions
+  - Network Binding    : 0.0.0.0 (Accessible across server network/internet)
 ==========================================================================
 ```
 
@@ -125,6 +130,8 @@ print(result["text"])
 ```text
 ThinkNCollab_TRANSCRIPT/
 ├── README.md                  # Production Open-Source Documentation
+├── LICENSE                    # MIT License Specification
+├── CONTRIBUTING.md            # Open-Source Contribution Guidelines
 ├── server.py                  # Auto-Port OpenAI API Compatible Server (0.0.0.0 Host)
 ├── thinkncollab_whisper.py    # OpenAI Whisper Style CLI & Python Library Script
 ├── thinkncollab-scribe-sdk.js # Official ThinkNCollab JavaScript / TypeScript SDK Client
@@ -135,6 +142,12 @@ ThinkNCollab_TRANSCRIPT/
 ├── src/                       # Core Engine Modules (Noise Reducer, Model Loaders)
 └── notebooks/                 # Kaggle CUDA Training Notebook
 ```
+
+---
+
+## Contributing
+
+We welcome community contributions! Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on submitting pull requests and reporting issues.
 
 ---
 

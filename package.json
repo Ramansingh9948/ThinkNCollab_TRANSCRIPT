@@ -1,7 +1,7 @@
 {
   "name": "@thinkncollab/scribe",
   "version": "1.0.0",
-  "description": "Official Open-Source JavaScript/TypeScript SDK for ThinkNCollab Speech-to-Text Model",
+  "description": "Official Open-Source JavaScript/TypeScript SDK for ThinkNCollab Hinglish Speech-to-Text ASR Model",
   "main": "thinkncollab-scribe-sdk.js",
   "scripts": {
     "test": "node -e \"const { ThinkNCollabScribe } = require('./thinkncollab-scribe-sdk.js'); console.log('ThinkNCollab SDK Loaded Successfully');\""
@@ -13,8 +13,13 @@
     "asr",
     "hinglish",
     "hindi",
+    "indian-english",
+    "code-switching",
+    "audio-transcription",
     "stt",
-    "audio-transcription"
+    "openai-whisper-compatible",
+    "noise-reduction",
+    "open-source-ai"
   ],
   "author": "ThinkNCollab AI Team",
   "license": "MIT",
