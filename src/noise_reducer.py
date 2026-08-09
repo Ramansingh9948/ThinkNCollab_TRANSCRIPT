@@ -1,55 +1,49 @@
 #!/usr/bin/env python3
-import math
 import numpy as np
 
 class AudioNoiseReducer:
-    def __init__(self, sample_rate=16000, alpha=2.0, beta=0.01):
+    def __init__(self, sample_rate=16000, frame_size=512, hop_size=256):
         self.sample_rate = sample_rate
-        self.alpha = alpha
-        self.beta = beta
+        self.frame_size = frame_size
+        self.hop_size = hop_size
+        self.window = np.hanning(self.frame_size)
 
-    def reduce_noise_spectral_subtraction(self, audio_samples):
-        if len(audio_samples) == 0:
-            return audio_samples
+    def reduce_noise_spectral_subtraction(self, audio):
+        if len(audio) < self.frame_size * 2:
+            return audio
 
-        samples = np.array(audio_samples, dtype=np.float32)
-        frame_len = 512
-        hop_len = 256
+        samples = np.array(audio, dtype=np.float32)
+        num_frames = (len(samples) - self.frame_size) // self.hop_size + 1
+        output = np.zeros(len(samples), dtype=np.float32)
 
-        if len(samples) < frame_len * 5:
-            return audio_samples
+        # Estimate initial noise spectrum profile from ambient background
+        noise_frames = samples[:self.frame_size * 4]
+        noise_stft = np.abs(np.fft.rfft(np.reshape(noise_frames, (4, self.frame_size)), axis=1))
+        noise_profile = np.median(noise_stft, axis=0)
 
-        noise_frames = samples[:frame_len * 5]
-        noise_stft = np.abs(np.fft.rfft(np.reshape(noise_frames, (5, frame_len)), axis=1))
-        noise_psd = np.mean(noise_stft ** 2, axis=0)
-
-        num_frames = (len(samples) - frame_len) // hop_len + 1
-        cleaned_signal = np.zeros(len(samples), dtype=np.float32)
-        window = np.hanning(frame_len)
+        freqs = np.fft.rfftfreq(self.frame_size, 1.0 / self.sample_rate)
+        voice_mask = (freqs >= 250) & (freqs <= 3800)
 
         for i in range(num_frames):
-            start = i * hop_len
-            frame = samples[start:start + frame_len] * window
+            start = i * self.hop_size
+            frame = samples[start:start + self.frame_size] * self.window
             stft = np.fft.rfft(frame)
             mag = np.abs(stft)
             phase = np.angle(stft)
-            psd = mag ** 2
 
-            subtracted_psd = np.maximum(psd - self.alpha * noise_psd, self.beta * psd)
-            clean_mag = np.sqrt(subtracted_psd)
+            # Adaptive SNR-based Gain Masking
+            snr = np.maximum(mag / (noise_profile + 1e-8), 1.0)
+            gain = 1.0 - (1.0 / snr)
+            gain[voice_mask] = np.maximum(gain[voice_mask], 0.85)
+            gain = np.clip(gain, 0.15, 1.0)
 
-            clean_stft = clean_mag * np.exp(1j * phase)
-            clean_frame = np.fft.irfft(clean_stft) * window
+            clean_stft = mag * gain * np.exp(1j * phase)
+            clean_frame = np.fft.irfft(clean_stft) * self.window
+            output[start:start + self.frame_size] += clean_frame
 
-            cleaned_signal[start:start + frame_len] += clean_frame
-
-        return cleaned_signal
+        return output
 
 if __name__ == "__main__":
     reducer = AudioNoiseReducer()
-    t = np.linspace(0, 1, 16000)
-    speech = np.sin(2 * np.pi * 440 * t)
-    noise = np.random.normal(0, 0.3, 16000)
-    noisy_audio = speech + noise
-
-    clean = reducer.reduce_noise_spectral_subtraction(noisy_audio)
+    signal = np.sin(2 * np.pi * 440 * np.linspace(0, 1, 16000)) + np.random.normal(0, 0.2, 16000)
+    cleaned = reducer.reduce_noise_spectral_subtraction(signal)
