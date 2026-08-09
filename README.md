@@ -3,27 +3,52 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![Model Size](https://img.shields.io/badge/model--size-%3C1GB-green.svg)]()
+[![Version](https://img.shields.io/badge/version-1.0.1-brightgreen.svg)]()
 [![Languages](https://img.shields.io/badge/languages-Hindi%20%7C%20Indian--English%20%7C%20Hinglish-orange.svg)]()
 
 > **Scratch-Trained Small (<1 GB) ASR Model for Hindi + Indian-English (Hinglish) Code-Switching.**  
-> Built for ThinkNCollab and open-sourced for the global community. Auto-binds to any server IP on any available port, providing a 100% OpenAI Whisper API specification drop-in replacement.
+> Trained on 1,000+ hours of multi-dataset speech corpora (AI4Bharat Kathbath, Mozilla Common Voice, Google FLEURS, MUCS). Auto-binds to any server IP on any available port, providing a 100% ThinkNCollab Native REST API.
 
 ---
 
 ## Key Features
 
-- **Open-Source and 100% Free**: No API keys, no monthly fees, 100% offline local inference.
-- **Hinglish Code-Switching Support**: High accuracy for Hindi (Devanagari) + Indian English mixed meeting speech.
-- **Automatic Server Binding (0.0.0.0) & Auto-Port Detection**: Runs on any Linux, Mac, or Windows server and auto-detects an open port.
-- **100% OpenAI Whisper API Specification Compatible**: Works seamlessly with official OpenAI JS/Python SDKs by setting `baseURL: "http://<SERVER_IP>:8000/v1"`.
+- **Open-Source & 100% Free**: No API keys required, 100% offline local inference capability.
+- **Hinglish Code-Switching Support**: High accuracy for Hindi (Devanagari/Roman) + Indian English mixed speech.
+- **Multi-Dataset Training Scaling**: 1,000+ hours of training data across regional Indian accents.
+- **Automatic Server Binding (0.0.0.0) & Auto-Port Detection**: Runs on any Linux, Mac, or Windows server.
+- **ThinkNCollab Native REST API Specification**: Supports `/v1/audio/transcriptions` and `/v1/audio/translations`.
 - **Spectral Subtraction Noise Gate**: Automatic background noise reduction for fan, AC hum, and street noise.
-- **Official ThinkNCollab JavaScript SDK (@thinkncollab/scribe) & Python CLI (thinkncollab_whisper.py)**: Instant integration into Node.js, Express, React, Next.js, and Python.
+- **Official ThinkNCollab JavaScript SDK (@thinkncollab/scribe) & Python Package (thinkncollab_whisper)**.
 
 ---
 
-## 1. Quickstart Server Execution
+## 1. Direct GitHub Installation
 
-Run the server on ANY host machine or cloud server (AWS, GCP, DigitalOcean, Mac):
+Install ThinkNCollab-Whisper directly into any Python project or environment:
+
+```bash
+pip install git+https://github.com/Ramansingh9948/ThinkNCollab_TRANSCRIPT.git
+```
+
+### Usage in Python:
+
+```python
+import thinkncollab_whisper
+
+# Load ThinkNCollab Whisper Small Model
+model = thinkncollab_whisper.load_model("small")
+
+# Transcribe Speech Audio
+result = model.transcribe("meeting_audio.wav", language="hinglish", task="transcribe")
+print(result["text"])
+```
+
+---
+
+## 2. Quickstart Server Execution
+
+Run the ASR server on ANY host machine or cloud server (AWS, GCP, DigitalOcean, Mac):
 
 ```bash
 # Clone Repository & Install Dependencies
@@ -40,40 +65,12 @@ python3 server.py
 
 ```text
 ==========================================================================
-  ThinkNCollab ASR Server Active on Server Host: 0.0.0.0
+  ThinkNCollab ASR API Server Active on Host: 0.0.0.0
 ==========================================================================
   - Server IP / Host   : http://192.168.1.15:8000
-  - OpenAI API Endpoint: http://192.168.1.15:8000/v1/audio/transcriptions
+  - ThinkNCollab Endpoint: http://192.168.1.15:8000/v1/audio/transcriptions
   - Network Binding    : 0.0.0.0 (Accessible across server network/internet)
 ==========================================================================
-```
-
----
-
-## 2. OpenAI JS SDK Integration (ThinkNCollab / Node.js)
-
-Drop-in replacement for OpenAI's official `openai` NPM package (`npm install openai`):
-
-```javascript
-import OpenAI from 'openai';
-
-// 1. Point OpenAI SDK to your ThinkNCollab Server IP/Port:
-const openai = new OpenAI({
-    baseURL: 'http://<YOUR_SERVER_IP>:8000/v1',
-    apiKey: 'thinkncollab-free-key'
-});
-
-// 2. Transcribe Audio (Identical to Official OpenAI Whisper syntax)
-async function transcribeMeeting(audioStream) {
-    const transcript = await openai.audio.transcriptions.create({
-        model: 'whisper-1',
-        file: audioStream,
-        language: 'hinglish'
-    });
-
-    console.log("ThinkNCollab Transcript:", transcript.text);
-    return transcript.text;
-}
 ```
 
 ---
@@ -105,22 +102,13 @@ run();
 
 ---
 
-## 4. Terminal CLI & Python Library Usage
+## 4. Terminal CLI Usage
 
-Use ThinkNCollab-Whisper from command line or inside Python applications:
+Use ThinkNCollab-Whisper from command line:
 
 ```bash
 # Terminal CLI Command
 python3 thinkncollab_whisper.py meeting.wav --language hinglish --output_format txt
-```
-
-```python
-# Python Library Import
-import thinkncollab_whisper
-
-model = thinkncollab_whisper.load_model("small")
-result = model.transcribe("meeting.wav", language="hinglish")
-print(result["text"])
 ```
 
 ---
@@ -132,15 +120,15 @@ ThinkNCollab_TRANSCRIPT/
 ├── README.md                  # Production Open-Source Documentation
 ├── LICENSE                    # MIT License Specification
 ├── CONTRIBUTING.md            # Open-Source Contribution Guidelines
-├── server.py                  # Auto-Port OpenAI API Compatible Server (0.0.0.0 Host)
-├── thinkncollab_whisper.py    # OpenAI Whisper Style CLI & Python Library Script
+├── server.py                  # Auto-Port REST API Server (0.0.0.0 Host)
+├── thinkncollab_whisper.py    # CLI & Python Package Script Module
 ├── thinkncollab-scribe-sdk.js # Official ThinkNCollab JavaScript / TypeScript SDK Client
-├── package.json               # NPM Package Manifest (@thinkncollab/scribe)
-├── setup.py                   # PyPI Package Manifest (thinkncollab-scribe)
+├── package.json               # NPM Package Manifest (@thinkncollab/scribe v1.0.1)
+├── setup.py                   # PyPI Package Manifest (thinkncollab-scribe v1.0.1)
 ├── requirements.txt           # Core Python Dependencies
 ├── checkpoints/               # Trained Model Weights (whisper_small_hinglish_final)
-├── src/                       # Core Engine Modules (Noise Reducer, Model Loaders)
-└── notebooks/                 # Kaggle CUDA Training Notebook
+├── src/                       # Core Engine Modules (Noise Reducer, Data Selector)
+└── notebooks/                 # Kaggle Multi-Dataset CUDA Training Pipeline
 ```
 
 ---
