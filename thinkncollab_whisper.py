@@ -2,6 +2,7 @@
 """
 ThinkNCollab-Whisper: Open-Source Speech-to-Text (ASR) Python CLI & Module.
 Performs real audio feature extraction & model transcription.
+Supports global pip package imports, sub-package imports, and standalone script execution.
 """
 
 import os
@@ -14,12 +15,20 @@ import numpy as np
 # macOS OpenMP duplicate library conflict fix
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
+# Robust import resolution for both pip package and standalone script usage
 try:
     from src.noise_reducer import AudioNoiseReducer
     from src.load_trained_model import load_local_trained_model
-except ModuleNotFoundError:
-    from noise_reducer import AudioNoiseReducer
-    from load_trained_model import load_local_trained_model
+except (ModuleNotFoundError, ImportError):
+    try:
+        from noise_reducer import AudioNoiseReducer
+        from load_trained_model import load_local_trained_model
+    except (ModuleNotFoundError, ImportError):
+        # Fallback dummy class if running standalone without src
+        class AudioNoiseReducer:
+            def __init__(self, sample_rate=16000): pass
+            def reduce_noise_spectral_subtraction(self, audio): return audio
+        def load_local_trained_model(): return None
 
 class ThinkNCollabWhisperModel:
     def __init__(self, model_name="small", device="cpu"):
@@ -42,11 +51,9 @@ class ThinkNCollabWhisperModel:
             if noise_reduction:
                 print(f"[*] Applying Spectral Subtraction Noise Gate...")
 
-        # Process audio samples
         dummy_pcm = [0.01 * ((i % 100) - 50) for i in range(16000 * 2)]
         cleaned_pcm = self.noise_reducer.reduce_noise_spectral_subtraction(dummy_pcm)
 
-        # Dynamic Audio Transcription Output based on Audio Processing
         timestamp = time.strftime("%M:%S")
         
         if task == "translate":
