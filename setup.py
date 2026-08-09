@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="thinkncollab-scribe",
-    version="1.0.0",
+    version="1.0.1",
     description="Official ThinkNCollab Hinglish (Hindi + Indian English) Speech-to-Text ASR Model & CLI Package",
     author="ThinkNCollab AI Team",
     url="https://github.com/Ramansingh9948/ThinkNCollab_TRANSCRIPT",

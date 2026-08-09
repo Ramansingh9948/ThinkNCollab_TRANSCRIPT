@@ -86,7 +86,7 @@ class ThinkNCollabAPIHandler(BaseHTTPRequestHandler):
         response = {
             "status": "ONLINE",
             "server": "ThinkNCollab ASR API",
-            "version": "1.0.0"
+            "version": "1.0.1"
         }
         res_bytes = json.dumps(response).encode("utf-8")
         self.send_response(200)
@@ -120,7 +120,6 @@ class ThinkNCollabAPIHandler(BaseHTTPRequestHandler):
             except Exception:
                 filename = "recorded_mic_audio.wav"
 
-            # Execute model.transcribe via thinkncollab_whisper module
             if model_instance:
                 res_dict = model_instance.transcribe(filename, task=task, verbose=True)
                 full_text = res_dict["text"]

@@ -1,6 +1,6 @@
 {
   "name": "@thinkncollab/scribe",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Official Open-Source JavaScript/TypeScript SDK for ThinkNCollab Hinglish Speech-to-Text ASR Model",
   "main": "thinkncollab-scribe-sdk.js",
   "scripts": {
