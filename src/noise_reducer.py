@@ -16,13 +16,12 @@ class AudioNoiseReducer:
         num_frames = (len(samples) - self.frame_size) // self.hop_size + 1
         output = np.zeros(len(samples), dtype=np.float32)
 
-        # Estimate initial noise spectrum profile from ambient background
         noise_frames = samples[:self.frame_size * 4]
         noise_stft = np.abs(np.fft.rfft(np.reshape(noise_frames, (4, self.frame_size)), axis=1))
         noise_profile = np.median(noise_stft, axis=0)
 
         freqs = np.fft.rfftfreq(self.frame_size, 1.0 / self.sample_rate)
-        voice_mask = (freqs >= 250) & (freqs <= 3800)
+        voice_mask = (freqs >= 200) & (freqs <= 4000)
 
         for i in range(num_frames):
             start = i * self.hop_size
@@ -31,11 +30,10 @@ class AudioNoiseReducer:
             mag = np.abs(stft)
             phase = np.angle(stft)
 
-            # Adaptive SNR-based Gain Masking
             snr = np.maximum(mag / (noise_profile + 1e-8), 1.0)
             gain = 1.0 - (1.0 / snr)
-            gain[voice_mask] = np.maximum(gain[voice_mask], 0.85)
-            gain = np.clip(gain, 0.15, 1.0)
+            gain[voice_mask] = np.maximum(gain[voice_mask], 0.88)
+            gain = np.clip(gain, 0.20, 1.0)
 
             clean_stft = mag * gain * np.exp(1j * phase)
             clean_frame = np.fft.irfft(clean_stft) * self.window

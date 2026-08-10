@@ -29,12 +29,6 @@ class ThinkNCollabWhisperModel:
         self.model = load_local_trained_model()
 
     def transcribe(self, audio_input, language="hindi", task="transcribe", noise_reduction=True, temperature=0.0, no_speech_threshold=0.6, verbose=False):
-        """
-        Anti-Hallucination Decoding Engine:
-        - temperature=0.0 (Greedy decoding prevents hallucination loops)
-        - no_speech_threshold=0.6 (Silences hallucinations during background noise/gaps)
-        - Spectral Subtraction Noise Gate (Filters ambient noise)
-        """
         file_name = "audio_input.wav"
         if isinstance(audio_input, str):
             file_name = os.path.basename(audio_input)
@@ -45,10 +39,8 @@ class ThinkNCollabWhisperModel:
         dummy_pcm = [0.01 * ((i % 100) - 50) for i in range(16000 * 2)]
         cleaned_pcm = self.noise_reducer.reduce_noise_spectral_subtraction(dummy_pcm)
 
-        # Audio Energy Calculation for No-Speech Detection
         audio_energy = np.mean(np.square(cleaned_pcm)) if len(cleaned_pcm) > 0 else 0.0
         
-        # If audio energy is below threshold, prevent hallucination by returning silence tag
         if audio_energy < 0.00001:
             timestamp = time.strftime("%M:%S")
             return {
@@ -93,13 +85,13 @@ def load_model(name="small", device="cpu"):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="ThinkNCollab-Whisper: Open-Source Anti-Hallucination Speech-to-Text CLI"
+        description="ThinkNCollab-Whisper: Open-Source Speech-to-Text CLI"
     )
     parser.add_argument("audio", type=str, help="Path to input audio file (.wav, .mp3, .m4a)")
     parser.add_argument("--model", type=str, default="small", help="Model size: 'small'")
     parser.add_argument("--language", type=str, default="hindi", choices=["hindi", "hinglish", "english"], help="Language mode")
     parser.add_argument("--task", type=str, default="transcribe", choices=["transcribe", "translate"], help="Task mode")
-    parser.add_argument("--temperature", type=float, default=0.0, help="Decoding temperature (0.0 = greedy anti-hallucination)")
+    parser.add_argument("--temperature", type=float, default=0.0, help="Decoding temperature")
     parser.add_argument("--output_format", type=str, default="txt", choices=["txt", "json"], help="Output format")
     parser.add_argument("--output_dir", type=str, default=".", help="Output directory")
     parser.add_argument("--verbose", action="store_true", help="Print verbose logs")
