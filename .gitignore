@@ -87,3 +87,19 @@ Thumbs.db
 
 scratch
 apps
+
+# Large model checkpoint files (too big for GitHub — use Kaggle/HuggingFace Hub instead)
+*.pt
+*.bin
+*.onnx
+*.safetensors
+checkpoints/whisper_small_hinglish_final/
+checkpoints/whisper_small_hinglish_final.pt
+checkpoints/whisper_small_hinglish_v2.pt
+checkpoints/*.pt
+
+# SentencePiece tokenizer binary
+*.model
+
+# Test scratch files
+test_model.py
