@@ -154,15 +154,19 @@ def load_datasets(max_samples_per_ds=1000):
     from datasets import load_dataset
     samples = []
 
+    # List of datasets (Primary open un-gated datasets first, then optional gated datasets)
     sources = [
-        ("ai4bharat/kathbath",                     "hindi",     "sentence"),
-        ("mozilla-foundation/common_voice_11_0",   "hi",        "sentence"),
-        ("google/fleurs",                           "hi_in",     "transcription"),
-        ("google/fleurs",                           "en_in",     "transcription"),
-        ("mozilla-foundation/common_voice_11_0",   "bn",        "sentence"),
-        ("google/fleurs",                           "bn_in",     "transcription"),
-        ("mozilla-foundation/common_voice_11_0",   "ta",        "sentence"),
-        ("google/fleurs",                           "ta_in",     "transcription"),
+        ("google/fleurs",          "hi_in",   "transcription"),
+        ("google/fleurs",          "en_in",   "transcription"),
+        ("google/fleurs",          "bn_in",   "transcription"),
+        ("google/fleurs",          "ta_in",   "transcription"),
+        ("PolyAI/minds14",         "hi-IN",   "transcription"),
+        ("PolyAI/minds14",         "en-IN",   "transcription"),
+        # Gated / Auth datasets (Requires HF_TOKEN or huggingface-cli login)
+        ("ai4bharat/kathbath",    "hindi",   "sentence"),
+        ("mozilla-foundation/common_voice_11_0", "hi", "sentence"),
+        ("mozilla-foundation/common_voice_11_0", "bn", "sentence"),
+        ("mozilla-foundation/common_voice_11_0", "ta", "sentence"),
     ]
 
     for name, config, text_key in sources:
@@ -171,15 +175,16 @@ def load_datasets(max_samples_per_ds=1000):
             count = 0
             for item in ds:
                 audio = item.get("audio")
-                text  = item.get(text_key, item.get("sentence", item.get("text", "")))
+                text  = item.get(text_key, item.get("sentence", item.get("transcription", item.get("text", ""))))
                 if audio and text and text.strip():
                     samples.append((audio, text.strip()))
                     count += 1
                     if count >= max_samples_per_ds:
                         break
-            print(f"  [{name} / {config}] {count} samples")
+            print(f"  [OK] [{name} / {config}] {count} samples loaded")
         except Exception as e:
-            print(f"  [SKIP] {name}/{config}: {e}")
+            err_msg = str(e).split("\n")[0]
+            print(f"  [SKIP] [{name} / {config}]: {err_msg}")
 
     print(f"Total samples: {len(samples)}")
     return samples
