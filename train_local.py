@@ -17,7 +17,10 @@ os.environ["OMP_NUM_THREADS"]         = "1"
 os.environ["TOKENIZERS_PARALLELISM"]  = "false"
 os.environ["HF_HOME"]                 = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".hf_cache")
 os.environ["HF_DATASETS_CACHE"]       = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".hf_cache", "datasets")
+os.environ["HF_TOKEN_PATH"]           = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".hf_cache", "token")
 os.makedirs(os.environ["HF_HOME"], exist_ok=True)
+with open(os.environ["HF_TOKEN_PATH"], "a") as f:
+    pass
 
 import torch
 import torch.nn as nn
@@ -129,10 +132,24 @@ class TNCDataset(Dataset):
         audio, text = self.samples[idx]
         try:
             if isinstance(audio, dict):
-                waveform = np.array(audio["array"], dtype=np.float32)
-                sr = audio.get("sampling_rate", 16000)
+                if "array" in audio and audio["array"] is not None:
+                    waveform = np.array(audio["array"], dtype=np.float32)
+                    sr = audio.get("sampling_rate", 16000)
+                elif "bytes" in audio and audio["bytes"] is not None:
+                    import io, soundfile as sf
+                    waveform, sr = sf.read(io.BytesIO(audio["bytes"]))
+                elif "path" in audio and audio["path"]:
+                    waveform, sr = librosa.load(str(audio["path"]), sr=16000, mono=True)
+                else:
+                    waveform, sr = np.zeros(16000, dtype=np.float32), 16000
+
                 if sr != 16000:
-                    waveform = librosa.resample(waveform, orig_sr=sr, target_sr=16000)
+                    waveform = librosa.resample(waveform.astype(np.float32), orig_sr=sr, target_sr=16000)
+            elif isinstance(audio, bytes):
+                import io, soundfile as sf
+                waveform, sr = sf.read(io.BytesIO(audio))
+                if sr != 16000:
+                    waveform = librosa.resample(waveform.astype(np.float32), orig_sr=sr, target_sr=16000)
             else:
                 waveform, _ = librosa.load(str(audio), sr=16000, mono=True)
 
@@ -151,27 +168,29 @@ class TNCDataset(Dataset):
 
 # ── Data Loading ─────────────────────────────────────────────────────────────
 def load_datasets(max_samples_per_ds=1000):
-    from datasets import load_dataset
+    from datasets import load_dataset, Audio
     samples = []
 
-    # List of datasets (Primary open un-gated datasets first, then optional gated datasets)
+    # Valid un-gated open datasets configs (Fleurs config: hi_in, en_us, bn_in, ta_in, gu_in, mr_in)
     sources = [
         ("google/fleurs",          "hi_in",   "transcription"),
-        ("google/fleurs",          "en_in",   "transcription"),
+        ("google/fleurs",          "en_us",   "transcription"),
         ("google/fleurs",          "bn_in",   "transcription"),
         ("google/fleurs",          "ta_in",   "transcription"),
+        ("google/fleurs",          "gu_in",   "transcription"),
+        ("google/fleurs",          "mr_in",   "transcription"),
         ("PolyAI/minds14",         "hi-IN",   "transcription"),
         ("PolyAI/minds14",         "en-IN",   "transcription"),
-        # Gated / Auth datasets (Requires HF_TOKEN or huggingface-cli login)
-        ("ai4bharat/kathbath",    "hindi",   "sentence"),
-        ("mozilla-foundation/common_voice_11_0", "hi", "sentence"),
-        ("mozilla-foundation/common_voice_11_0", "bn", "sentence"),
-        ("mozilla-foundation/common_voice_11_0", "ta", "sentence"),
     ]
 
     for name, config, text_key in sources:
         try:
             ds = load_dataset(name, config, split="train", streaming=True)
+            try:
+                ds = ds.cast_column("audio", Audio(decode=False))
+            except Exception:
+                pass
+
             count = 0
             for item in ds:
                 audio = item.get("audio")
