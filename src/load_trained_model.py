@@ -24,30 +24,37 @@ class WhisperSmallHinglish(nn.Module):
                 d_model=768,
                 nhead=12,
                 dim_feedforward=3072,
+                dropout=0.0,
                 batch_first=True,
-                dropout=0.0
+                norm_first=True
             ),
             num_layers=12
         )
-        self.embedding = nn.Embedding(vocab_size, 768)
+        self.embedding = nn.Embedding(vocab_size, 768, padding_idx=0)
         self.decoder = nn.TransformerDecoder(
             nn.TransformerDecoderLayer(
                 d_model=768,
                 nhead=12,
                 dim_feedforward=3072,
+                dropout=0.0,
                 batch_first=True,
-                dropout=0.0
+                norm_first=True
             ),
             num_layers=12
         )
-        self.head = nn.Linear(768, vocab_size)
+        self.head = nn.Linear(768, vocab_size, bias=False)
+        self.head.weight = self.embedding.weight
+
+    def encode(self, mel):
+        x = self.stem(mel).permute(0, 2, 1)
+        return self.encoder(x)
 
     def forward(self, mel_input, decoder_input):
-        x = self.stem(mel_input)
-        x = x.permute(0, 2, 1)
-        memory = self.encoder(x)
+        memory = self.encode(mel_input)
+        T = decoder_input.size(1)
+        mask = nn.Transformer.generate_square_subsequent_mask(T, device=mel_input.device)
         tgt = self.embedding(decoder_input)
-        out = self.decoder(tgt, memory)
+        out = self.decoder(tgt, memory, tgt_mask=mask)
         return self.head(out)
 
 

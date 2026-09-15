@@ -60,6 +60,9 @@ class ThinkNCollabWhisperModel:
             import librosa
             y, sr = librosa.load(audio_path, sr=sample_rate, mono=True)
             y_clean = self.noise_reducer.reduce_noise_spectral_subtraction(y)
+            # Check if input audio is silent
+            if np.max(np.abs(y_clean)) < 0.015:
+                return np.zeros((n_mels, max_frames), dtype=np.float32)
 
             # Cap max length to 8s (128,000 samples)
             if len(y_clean) > 8 * 16000:
@@ -91,6 +94,18 @@ class ThinkNCollabWhisperModel:
 
         log_mel = self._audio_to_log_mel(audio_input) if isinstance(audio_input, str) and os.path.exists(audio_input) else np.zeros((80, 800), dtype=np.float32)
 
+        # Silence Gate: if audio contains only silence or near-zero energy, return empty
+        if np.max(log_mel) < 0.05 or np.ptp(log_mel) < 0.02:
+            elapsed_ms = (time.perf_counter() - t0) * 1000
+            return {
+                "text": "",
+                "raw_text": "",
+                "segments": [],
+                "language": language,
+                "task": task,
+                "infer_ms": round(elapsed_ms, 1)
+            }
+
         import torch
         generated_tokens = [1]  # <s> start token
 
@@ -110,36 +125,29 @@ class ThinkNCollabWhisperModel:
 
         # Decode tokens to clean text using SentencePiece or BPE
         text_out = ""
-        # Filter out special tokens (0,1,2,3) and raw byte fallbacks (< 260)
-        word_tokens = [t for t in generated_tokens if t >= 260]
+        # Valid tokens: exclude pad(0), bos(1), eos(2), unk(3)
+        valid_tokens = [t for t in generated_tokens if t not in (0, 1, 2, 3)]
 
-        if SP_PROCESSOR is not None and word_tokens:
+        if SP_PROCESSOR is not None and valid_tokens:
             try:
-                text_out = SP_PROCESSOR.decode(word_tokens)
+                text_out = SP_PROCESSOR.decode(valid_tokens)
             except Exception:
                 text_out = ""
 
-        if not text_out and word_tokens:
-            words = [ID_TO_TOKEN.get(t, "") for t in word_tokens if ID_TO_TOKEN.get(t, "")]
+        if not text_out and valid_tokens:
+            words = [ID_TO_TOKEN.get(t, "") for t in valid_tokens if ID_TO_TOKEN.get(t, "")]
             text_out = " ".join([w for w in words if w and not w.startswith("<")])
 
-        # Replace SentencePiece space symbol (\u2581 / ▁) with clean space
+        # Clean SentencePiece space symbols and whitespace
         if text_out:
             text_out = text_out.replace("\u2581", " ").replace("▁", " ").strip()
             import re
             text_out = re.sub(r"\s+", " ", text_out)
 
-        # Fallback if no valid word text detected
-        if not text_out or len(text_out.strip()) == 0 or re.match(r"^[\s\W▁]+$", text_out):
-            fallbacks = {
-                "hindi": "आज की प्रोजेक्ट मीटिंग शुरू हो चुकी है।",
-                "hinglish": "Aaj ki project meeting start ho chuki hai.",
-                "english": "Today's project meeting has officially started.",
-                "bengali_hindi": "आज की मीटिंग शुरू हो चुकी है।",
-                "tamil_hindi": "आज की मीटिंग शुरू हो चुकी है।",
-                "rajasthani_hindi": "आज री बैठक शुरू हो ग्यी है।"
-            }
-            text_out = fallbacks.get(language, "आज की प्रोजेक्ट मीटिंग शुरू हो चुकी है।")
+        # If only non-word punctuation/symbols were decoded, treat as empty
+        import re
+        if text_out and re.match(r"^[\s\W▁]+$", text_out):
+            text_out = ""
 
         elapsed_ms = (time.perf_counter() - t0) * 1000
         timestamp = time.strftime("%M:%S")
