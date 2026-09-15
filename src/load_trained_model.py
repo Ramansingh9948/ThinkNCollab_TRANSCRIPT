@@ -52,11 +52,14 @@ class WhisperSmallHinglish(nn.Module):
 
 
 def load_local_trained_model():
+    v2_path = os.path.join(CHECKPOINT_DIR, "whisper_small_hinglish_v2.pt")
     pt_path = os.path.join(CHECKPOINT_DIR, "whisper_small_hinglish_final.pt")
     dir_path = os.path.join(CHECKPOINT_DIR, "whisper_small_hinglish_final")
 
     checkpoint_path = None
-    if os.path.isfile(pt_path):
+    if os.path.isfile(v2_path):
+        checkpoint_path = v2_path
+    elif os.path.isfile(pt_path):
         checkpoint_path = pt_path
     elif os.path.isdir(dir_path):
         checkpoint_path = dir_path
