@@ -102,4 +102,4 @@ checkpoints/*.pt
 *.model
 
 # Test scratch files
-test_model.py
+test_model.py.hf_cache/
