@@ -48,12 +48,52 @@ if os.path.exists(BPE_JSON_PATH):
     except Exception:
         pass
 
+LANGUAGE_ALLOWED_TOKENS = {}
+
+def get_allowed_tokens_for_language(lang):
+    if lang in LANGUAGE_ALLOWED_TOKENS:
+        return LANGUAGE_ALLOWED_TOKENS[lang]
+
+    import unicodedata
+    allowed = {0, 1, 2, 3, 500}  # pad, bos, eos, unk, space piece
+
+    if SP_PROCESSOR is not None:
+        for i in range(260, SP_PROCESSOR.get_piece_size()):
+            s = SP_PROCESSOR.decode([i])
+            if lang in ["hindi", "rajasthani_hindi"]:
+                if any("DEVANAGARI" in unicodedata.name(ch, "") for ch in s):
+                    allowed.add(i)
+            elif lang in ["hinglish", "english"]:
+                if any("LATIN" in unicodedata.name(ch, "") or ch.isascii() for ch in s):
+                    allowed.add(i)
+            elif lang == "bengali_hindi":
+                if any("BENGALI" in unicodedata.name(ch, "") for ch in s):
+                    allowed.add(i)
+            elif lang == "tamil_hindi":
+                if any("TAMIL" in unicodedata.name(ch, "") for ch in s):
+                    allowed.add(i)
+
+    LANGUAGE_ALLOWED_TOKENS[lang] = allowed
+    return allowed
+
 class ThinkNCollabWhisperModel:
-    def __init__(self, model_name="small", device="cpu"):
+    def __init__(self, model_name="small", device="auto"):
         self.model_name = model_name
-        self.device = device
+        import torch
+        if device == "auto" or device == "cpu":
+            if torch.backends.mps.is_available():
+                self.device = torch.device("mps")
+            elif torch.cuda.is_available():
+                self.device = torch.device("cuda")
+            else:
+                self.device = torch.device("cpu")
+        else:
+            self.device = torch.device(device)
+
         self.noise_reducer = AudioNoiseReducer(sample_rate=16000)
         self.model = load_local_trained_model()
+        if self.model is not None:
+            self.model = self.model.to(self.device)
 
     def _audio_to_log_mel(self, audio_path, sample_rate=16000, n_mels=80, max_frames=800):
         try:
@@ -108,15 +148,26 @@ class ThinkNCollabWhisperModel:
 
         import torch
         generated_tokens = [1]  # <s> start token
+        allowed_tokens = get_allowed_tokens_for_language(language)
 
         if self.model is not None:
-            mel_tensor = torch.tensor(log_mel, dtype=torch.float32).unsqueeze(0)
+            mel_tensor = torch.tensor(log_mel, dtype=torch.float32, device=self.device).unsqueeze(0)
             self.model.eval()
             with torch.no_grad():
-                for i in range(25):
-                    dec_in = torch.tensor([generated_tokens], dtype=torch.long)
+                for i in range(15):
+                    dec_in = torch.tensor([generated_tokens], dtype=torch.long, device=self.device)
                     logits = self.model(mel_tensor, dec_in)
-                    next_tok = int(logits[0, -1, :].argmax(dim=-1).item())
+                    step_logits = logits[0, -1, :]
+
+                    if allowed_tokens:
+                        mask = torch.full_like(step_logits, -float("inf"))
+                        for tid in allowed_tokens:
+                            if tid < len(step_logits):
+                                mask[tid] = step_logits[tid]
+                        next_tok = int(mask.argmax(dim=-1).item())
+                    else:
+                        next_tok = int(step_logits.argmax(dim=-1).item())
+
                     if len(generated_tokens) > 2 and next_tok == generated_tokens[-1] == generated_tokens[-2]:
                         break
                     generated_tokens.append(next_tok)
@@ -125,7 +176,6 @@ class ThinkNCollabWhisperModel:
 
         # Decode tokens to clean text using SentencePiece or BPE
         text_out = ""
-        # Valid tokens: exclude pad(0), bos(1), eos(2), unk(3)
         valid_tokens = [t for t in generated_tokens if t not in (0, 1, 2, 3)]
 
         if SP_PROCESSOR is not None and valid_tokens:

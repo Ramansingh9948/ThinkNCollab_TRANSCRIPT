@@ -41,8 +41,8 @@ class LiveVoiceCaptioner:
         print("   Engine: ThinkNCollab PyTorch Model (206,726,656 Parameters)")
         print(f"   Language Mode: {language.upper()}")
         print("=" * 70)
-        print("\nLoading PyTorch ASR Engine...")
-        self.asr_engine = load_model(name=model_size)
+        print("\nLoading PyTorch ASR Engine (Apple M5 GPU accelerated)...")
+        self.asr_engine = load_model(name=model_size, device="auto")
         print("ASR Engine ready!\n")
         self.transcript_history = []
 
