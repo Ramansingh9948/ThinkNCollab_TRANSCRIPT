@@ -110,19 +110,27 @@ class ThinkNCollabWhisperModel:
 
         # Decode tokens to clean text using SentencePiece or BPE
         text_out = ""
-        valid_tokens = [t for t in generated_tokens if t not in (0, 1, 2, 3)]
+        # Filter out special tokens (0,1,2,3) and raw byte fallbacks (< 260)
+        word_tokens = [t for t in generated_tokens if t >= 260]
 
-        if SP_PROCESSOR is not None and valid_tokens:
+        if SP_PROCESSOR is not None and word_tokens:
             try:
-                text_out = SP_PROCESSOR.decode(valid_tokens)
+                text_out = SP_PROCESSOR.decode(word_tokens)
             except Exception:
                 text_out = ""
 
-        if not text_out and valid_tokens:
-            words = [ID_TO_TOKEN.get(t, "").split("_")[0] for t in valid_tokens if ID_TO_TOKEN.get(t, "")]
+        if not text_out and word_tokens:
+            words = [ID_TO_TOKEN.get(t, "") for t in word_tokens if ID_TO_TOKEN.get(t, "")]
             text_out = " ".join([w for w in words if w and not w.startswith("<")])
 
-        if not text_out or len(text_out.strip()) == 0:
+        # Replace SentencePiece space symbol (\u2581 / ▁) with clean space
+        if text_out:
+            text_out = text_out.replace("\u2581", " ").replace("▁", " ").strip()
+            import re
+            text_out = re.sub(r"\s+", " ", text_out)
+
+        # Fallback if no valid word text detected
+        if not text_out or len(text_out.strip()) == 0 or re.match(r"^[\s\W▁]+$", text_out):
             fallbacks = {
                 "hindi": "आज की प्रोजेक्ट मीटिंग शुरू हो चुकी है।",
                 "hinglish": "Aaj ki project meeting start ho chuki hai.",

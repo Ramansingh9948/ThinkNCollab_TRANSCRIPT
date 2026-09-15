@@ -65,9 +65,9 @@ class LiveVoiceCaptioner:
 
                     audio_data = audio_chunk.flatten()
 
-                    # RMS Volume Energy Check — filter out background silence
+                    # RMS Volume Energy Check — filter out background room silence
                     rms_energy = np.sqrt(np.mean(audio_data ** 2))
-                    if rms_energy < 0.005:
+                    if rms_energy < 0.015:
                         continue
 
                     # Save temporary wave file for inference
@@ -84,10 +84,14 @@ class LiveVoiceCaptioner:
                         pass
 
                     text = result.get("raw_text", "").strip()
+                    text = text.replace("▁", " ").replace("\u2581", " ").strip()
+                    import re
+                    text = re.sub(r"\s+", " ", text)
+
                     infer_ms = result.get("infer_ms", 0.0)
                     timestamp = time.strftime("%H:%M:%S")
 
-                    if text:
+                    if text and not re.match(r"^[\s\W▁]+$", text):
                         line = f"[{timestamp}] Speaker 1: {text}"
                         print(f"  {line}  ({infer_ms}ms)")
                         self.transcript_history.append(line)
