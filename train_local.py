@@ -47,10 +47,10 @@ N_HEADS          = 12
 ENC_LAYERS       = 12
 DEC_LAYERS       = 12
 FF_DIM           = 3072
-MAX_FRAMES       = 3000   # 30 seconds @ 16kHz / hop=160
+MAX_FRAMES       = 800    # 8 seconds max (fits 99% sentence audio, 14x faster Attention computation)
 MAX_TARGET_LEN   = 128
-BATCH_SIZE       = 2      # Small batch for 16GB RAM
-GRAD_ACCUM       = 8      # Effective batch = 16
+BATCH_SIZE       = 4      # Optimized for M5 RAM
+GRAD_ACCUM       = 4      # Effective batch = 16
 LEARNING_RATE    = 3e-4
 MAX_EPOCHS       = 5
 MAX_SAMPLES      = 5000   # Start small — increase when confident
@@ -107,8 +107,16 @@ import librosa
 
 def audio_to_log_mel(waveform, sr=16000):
     y = np.array(waveform, dtype=np.float32)
+    if y.ndim > 1:
+        y = y.mean(axis=0)
     if y.max() > 1.0:
         y = y / 32768.0
+
+    # Limit maximum audio duration to 8 seconds (128,000 samples)
+    max_samples_audio = 8 * 16000
+    if len(y) > max_samples_audio:
+        y = y[:max_samples_audio]
+
     mel = librosa.feature.melspectrogram(y=y, sr=sr, n_fft=400, hop_length=160, n_mels=N_MELS)
     log_mel = librosa.power_to_db(mel, ref=np.max)
     log_mel = np.clip((log_mel + 80.0) / 80.0, 0.0, 1.0)
@@ -363,7 +371,7 @@ def main():
 
     # 3. Build dataset
     dataset = TNCDataset(samples, tokenizer)
-    loader  = DataLoader(dataset, batch_size=args.batch, shuffle=True, num_workers=0)
+    loader  = DataLoader(dataset, batch_size=args.batch, shuffle=True, num_workers=2)
     print(f"Dataset ready: {len(dataset)} samples")
 
     # 4. Build model
